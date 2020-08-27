@@ -538,6 +538,10 @@ set CCC_Number=replace(CCC_Number," ",""),
     Remarks=replace(Remarks,"\'",""),
     Remarks=replace(Remarks,"\\","");
 
+
+update tr_hts_linkage
+    set CCC_Number = 0 where  CCC_Number not regexp '^(-|\\+)?([0-9]+\\.[0-9]*|[0-9]*\\.[0-9]+|[0-9]+)$';
+
   
 
 
