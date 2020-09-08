@@ -681,7 +681,6 @@ CREATE TABLE migration_st.st_demographics
     </partitioning>
     <connection>mssql</connection>
     <sql>-- 1. Demographics/Registration for only patients  v3.0.0 created by Chester
-
 exec pr_OpenDecryptedSession;
 SELECT
 P.Id Person_Id, 
@@ -691,7 +690,7 @@ CAST(DECRYPTBYKEY(P.FirstName) AS VARCHAR(50)) AS First_Name,
 CAST(DECRYPTBYKEY(P.MidName) AS VARCHAR(50)) AS Middle_Name,
 CAST(DECRYPTBYKEY(P.LastName) AS VARCHAR(50)) AS Last_Name,
 CAST(DECRYPTBYKEY(P.NickName) AS VARCHAR(50)) AS Nickname,
-format(cast(ISNULL(P.DateOfBirth, PT.DateOfBirth) as date),'yyyy-MM-dd') AS DOB,
+format(cast(COALESCE(P.DateOfBirth,mp.DOB, PT.DateOfBirth) as date),'yyyy-MM-dd') AS DOB,
 CASE(ISNULL(P.DobPrecision, PT.DobPrecision))
 	WHEN 0 THEN 'EXACT'
 	WHEN 1 THEN 'ESTIMATED'
@@ -760,6 +759,7 @@ P.CreatedBy
 
 FROM Person P
 INNER JOIN Patient PT ON PT.PersonId = P.Id
+LEFT JOIN mst_Patient mp on mp.Ptn_Pk=PT.ptn_pk
 LEFT JOIN (select t.PersonId,t.SupporterId,t.Next_of_kin,t.Next_of_kin_phone,t.Next_of_kin_relationship,t.Next_of_kin_address,t.Consent,t.Consent_Decline_Reason from (select pts.PersonId ,pts.SupporterId,(pt.FirstName + ' ' + pt.MiddleName + ' ' + pt.LastName) as Next_of_kin,pts.ContactCategory,pts.ContactRelationship,lts.DisplayName as Next_of_kin_relationship
 ,pts.MobileContact as Next_of_kin_phone,pcv.PhysicalAddress as [Next_of_kin_address],pcc.Consent,pcc.Consent_Decline_Reason
 ,pts.CreateDate ,ROW_NUMBER() OVER(Partition by pts.PersonId order by pts.CreateDate desc)rownum from PatientTreatmentSupporter pts
